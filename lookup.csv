@@ -1,2 +1,2 @@
-taut_inchikey,canonical_smiles,std_inchikey,cas,name
-FMVJYQGSRWVMQV-UHFFFAOYNA-N,C#CC(=O)OCC,FMVJYQGSRWVMQV-UHFFFAOYSA-N,623-47-2,propynoic acid ethyl ester
+name,cas,canonical_smiles,taut_inchikey,std_inchikey,source,nucleus,experiment,freq,solvent
+propynoic acid ethyl ester,623-47-2,C#CC(=O)OCC,FMVJYQGSRWVMQV-UHFFFAOYNA-N,FMVJYQGSRWVMQV-UHFFFAOYSA-N,NMRShiftDB,1H,1D,600,CDCl3
