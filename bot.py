@@ -6,10 +6,11 @@ from dotenv import load_dotenv  # type: ignore
 
 import discord  # type: ignore
 from discord.ext import commands  # type: ignore
+import pandas as pd  # type: ignore
 from rdkit import Chem  # type: ignore
 from rdkit.Chem import Draw  # type: ignore
 
-from utils import resolve_identifer
+from utils import resolve_identifer, display_mol
 
 
 load_dotenv()
@@ -35,14 +36,8 @@ async def show_mol(ctx, *identifier: str):
         return
     mol = Chem.MolFromSmiles(smi)
 
-    with TemporaryDirectory() as tmp:
-        Chem.Draw.MolToFile(
-            mol,
-            f'{tmp}/mol_img.png',
-            size=(300, 200),
-            imageType='png'
-        )
-        await ctx.send(file=discord.File(f'{tmp}/mol_img.png'))
+    await display_mol(ctx, mol)
+
 
 @bot.command(name='nmr_search')
 async def nmr_search(ctx, *identifier: str):
@@ -56,9 +51,27 @@ async def nmr_search(ctx, *identifier: str):
         await ctx.send('invalid identifier')
         return
     mol = Chem.MolFromSmiles(smi)
-    std_inchikey = Chem.MolToInchiKey(mol)
-    taut_inchikey = Chem.MolToInchiKey(mol, '/FixedH')
 
-    await ctx.send(f'{std_inchikey}, {taut_inchikey}')
+    df = pd.read_csv('lookup.csv')
+
+    taut_inchikey = Chem.MolToInchiKey(mol, '/FixedH')
+    rows = df.loc[df.taut_inchikey == taut_inchikey]
+    if len(rows) == 0:
+        std_inchikey = Chem.MolToInchiKey(mol)
+        rows = df.loc[df.std_inchikey == std_inchikey]
+    if len(rows) == 0:
+        await ctx.send(f'no entry found for {identifier}')
+        return
+    for row in rows.to_dict('records'):
+        await ctx.send(row['name'])
+        await display_mol(ctx, Chem.MolFromSmiles(row['canonical_smiles']))
+        dir = f'spectra/{row["taut_inchikey"]}'
+        files = os.listdir(dir)
+        pngs = [png for png in files if png.endswith('.png')]
+        fids = [fid for fid in files if fid.endswith('.zip')]
+        for png, fid in zip(pngs, fids):
+            await ctx.send(file=discord.File(f'{dir}/{png}'))
+            await ctx.send(file=discord.File(f'{dir}/{fid}'))
+
 
 bot.run(TOKEN)

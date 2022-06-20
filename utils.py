@@ -1,5 +1,7 @@
 import requests  # type: ignore
+from tempfile import TemporaryDirectory
 
+import discord  # type: ignore
 from rdkit import Chem  # type: ignore
 
 
@@ -22,3 +24,13 @@ def nci_chem_resolver(identifier: str, id_type: str = 'smiles'):
         return r.content.decode()
     except:
         return 'identifier could not be resolved'
+
+async def display_mol(ctx, mol):
+    with TemporaryDirectory() as tmp:
+        Chem.Draw.MolToFile(
+            mol,
+            f'{tmp}/mol_img.png',
+            size=(300, 200),
+            imageType='png'
+        )
+        await ctx.send(file=discord.File(f'{tmp}/mol_img.png'))
